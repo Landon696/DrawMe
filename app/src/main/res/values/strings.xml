@@ -16,4 +16,7 @@
     <string name="orange">Orange</string>
     <string name="yellow">Yellow</string>
 
+    <!-- color picker -->
+    <string name="pick_your_color_title">Pick your pencil color</string>
+
 </resources>

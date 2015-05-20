@@ -9,7 +9,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 
+import com.squareup.otto.Subscribe;
 import com.tutors.varsity.R;
+import com.tutors.varsity.ui.event.ColorPicked;
+import com.tutors.varsity.ui.widget.ColorPicker;
+import com.tutors.varsity.util.otto.ApplicationBus;
 
 /**
  * Created by Landon on 5/18/15.
@@ -43,6 +47,19 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        ApplicationBus.getInstance().register(this);
+    }
+
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        ApplicationBus.getInstance().unregister(this);
+    }
+
+    @Override
     public void onClick(View view) {
 
         switch (view.getId()) {
@@ -55,8 +72,15 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
                 break;
 
             case R.id.color_swatch:
+                ColorPicker.newInstance().show(getFragmentManager(), "");
                 break;
         }
+    }
+
+    @Subscribe
+    public void onColorPicked(ColorPicked event) {
+
+       mColorSwatch.setBackgroundColor(getResources().getColor(event.getColorId()));
     }
 
     private void intiViews(View v) {
