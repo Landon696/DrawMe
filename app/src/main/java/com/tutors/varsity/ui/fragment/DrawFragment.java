@@ -5,14 +5,19 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 
 import com.squareup.otto.Subscribe;
 import com.tutors.varsity.R;
 import com.tutors.varsity.ui.event.ColorPicked;
 import com.tutors.varsity.ui.widget.ColorPicker;
+import com.tutors.varsity.ui.widget.DrawingCanvas;
 import com.tutors.varsity.util.otto.ApplicationBus;
 
 /**
@@ -23,8 +28,16 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
     ImageButton mPencil;
     ImageButton mEraser;
     View mColorSwatch;
+    DrawingCanvas mDrawingCanvas;
+    FrameLayout mContainer;
+    int mPencilColor;
 
     public DrawFragment() {
+    }
+
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
     }
 
     @Override
@@ -77,14 +90,37 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
         }
     }
 
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_undo:
+                mDrawingCanvas.undo();
+                return true;
+            case R.id.action_email:
+                return true;
+            default:
+                break;
+        }
+
+        return false;
+    }
+
     @Subscribe
     public void onColorPicked(ColorPicked event) {
 
-       mColorSwatch.setBackgroundColor(getResources().getColor(event.getColorId()));
+        mColorSwatch.setBackgroundColor(getResources().getColor(event.getColorId()));
+        mPencilColor = event.getColorId();
+        mDrawingCanvas.setPencilColor(mPencilColor);
     }
 
     private void intiViews(View v) {
 
+        mContainer = (FrameLayout) v.findViewById(R.id.drawing_container);
         mPencil = (ImageButton) v.findViewById(R.id.pencil);
         mEraser = (ImageButton) v.findViewById(R.id.eraser);
         mColorSwatch = v.findViewById(R.id.color_swatch);
@@ -92,6 +128,11 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
         mPencil.setOnClickListener(this);
         mEraser.setOnClickListener(this);
         mColorSwatch.setOnClickListener(this);
+
+        mPencilColor = R.color.blue;
+        mDrawingCanvas = new DrawingCanvas(getActivity());
+        mDrawingCanvas.setPencilColor(mPencilColor);
+        mContainer.addView(mDrawingCanvas);
     }
 
     private void makeToolbarButtonActive(int rId) {

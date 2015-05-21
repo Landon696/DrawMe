@@ -34,11 +34,9 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_undo:
-
-                return true;
+                return false;
             case R.id.action_email:
-
-                return true;
+                return false;
             default:
                 return super.onOptionsItemSelected(item);
         }
