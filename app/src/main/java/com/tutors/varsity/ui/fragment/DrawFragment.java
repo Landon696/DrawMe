@@ -1,7 +1,12 @@
 package com.tutors.varsity.ui.fragment;
 
+import android.app.Activity;
+import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -19,6 +24,14 @@ import com.tutors.varsity.ui.event.ColorPicked;
 import com.tutors.varsity.ui.widget.ColorPicker;
 import com.tutors.varsity.ui.widget.DrawingCanvas;
 import com.tutors.varsity.util.otto.ApplicationBus;
+
+import org.joda.time.DateTime;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 /**
  * Created by Landon on 5/18/15.
@@ -45,7 +58,7 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
                              Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_draw, container, false);
 
-        intiViews(v);
+        initViews(v);
 
         return v;
     }
@@ -103,6 +116,7 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
                 mDrawingCanvas.undo();
                 return true;
             case R.id.action_email:
+                emailFriend(getActivity(),R.id.drawing_container);
                 return true;
             default:
                 break;
@@ -119,7 +133,7 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
         mDrawingCanvas.setPencilColor(mPencilColor);
     }
 
-    private void intiViews(View v) {
+    private void initViews(View v) {
 
         mContainer = (FrameLayout) v.findViewById(R.id.drawing_container);
         mPencil = (ImageButton) v.findViewById(R.id.pencil);
@@ -143,5 +157,65 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
         GradientDrawable gd = (GradientDrawable)(getActivity().findViewById(rId)).getBackground();
         gd.setStroke(2,getResources().getColor(R.color.white));
 
+    }
+
+    private void emailFriend(Activity activity, int resourceId) {
+        takeScreenshotAndEmail(activity, resourceId);
+    }
+
+    private void takeScreenshotAndEmail(Activity activity, int resourceId) {
+        long iterator= new DateTime().getMillis() / 1000L; //unix time
+
+        String mPath = Environment.getExternalStorageDirectory().toString() + "/DrawMe/";
+        View v1 = activity.getWindow().getDecorView().findViewById(resourceId);
+        v1.layout(0, 0, v1.getMeasuredWidth(), v1.getMeasuredHeight());
+        v1.setDrawingCacheEnabled(true);
+
+        final Bitmap bitmap = Bitmap.createBitmap(v1.getDrawingCache());
+        v1.setDrawingCacheEnabled(false);
+
+        File imageFile = new File(mPath);
+        if (!imageFile.exists()) {
+            imageFile.mkdirs();
+        }
+        imageFile = new File(imageFile+"/"+iterator+"_screenshot.png");
+        try {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, bos);
+            byte[] bitmapData = bos.toByteArray();
+
+            //write the bytes in file
+            FileOutputStream fos = new FileOutputStream(imageFile);
+            fos.write(bitmapData);
+            fos.flush();
+            fos.close();
+
+            emailPhoto(imageFile.getAbsolutePath());
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void emailPhoto(String path) {
+
+        Intent emailIntent = new Intent(Intent.ACTION_SEND);
+        emailIntent.setType("text/plain");
+        emailIntent.putExtra(Intent.EXTRA_SUBJECT, "DrawMe Photo");
+        emailIntent.putExtra(Intent.EXTRA_TEXT, "Checkout this cool photo I drew.");
+
+        File file = new File(path);
+
+        if (!file.exists() || !file.canRead()) {
+            return;
+        }
+
+        Uri uri = Uri.fromFile(file);
+
+        emailIntent.putExtra(Intent.EXTRA_STREAM, uri);
+
+        startActivity(Intent.createChooser(emailIntent, "Pick an Email provider"));
     }
 }

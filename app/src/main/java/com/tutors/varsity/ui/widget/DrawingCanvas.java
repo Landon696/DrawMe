@@ -38,7 +38,7 @@ public class DrawingCanvas extends View implements View.OnTouchListener {
         mPaint.setStrokeCap(Paint.Cap.ROUND);
         mPaint.setStrokeWidth(defaultStroke);
         mCanvas = new Canvas();
-        mCanvas.drawColor(Color.BLACK);
+        mCanvas.drawColor(Color.WHITE);
         mPath = new Path();
         mPaths.add(mPath);
 
