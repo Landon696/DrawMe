@@ -53,6 +53,12 @@ public class DrawingCanvas extends View implements View.OnTouchListener {
         mPencilColor = color;
         mPaint.setColor(getResources().getColor(mPencilColor));
     }
+
+    public void erase() {
+        mPaths.clear();
+        invalidate();
+    }
+
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
@@ -61,8 +67,13 @@ public class DrawingCanvas extends View implements View.OnTouchListener {
     @Override
     protected void onDraw(Canvas canvas) {
 
-        for (Path p : mPaths){
-            canvas.drawPath(p, mPaint);
+        if (mPaths.size() > 0) {
+            for (Path p : mPaths) {
+                canvas.drawPath(p, mPaint);
+            }
+        }
+        else {
+            canvas.drawColor(Color.TRANSPARENT);
         }
     }
 

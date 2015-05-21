@@ -82,6 +82,7 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
 
             case R.id.eraser:
                 makeToolbarButtonActive(view.getId());
+                mDrawingCanvas.erase();
                 break;
 
             case R.id.color_swatch:

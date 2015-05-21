@@ -44,7 +44,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:padding="10dp"
-            android:src="@drawable/ic_action_edit"/>
+            android:src="@drawable/ic_action_discard"/>
 
         <View
             android:id="@+id/color_swatch"
