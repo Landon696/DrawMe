@@ -20,4 +20,7 @@
     <!-- color picker -->
     <string name="pick_your_color_title">Pick your pencil color</string>
 
+
+    <!-- Line thickness picker -->
+    <string name="pick_thickness__title">Select your pencil thickness</string>
 </resources>

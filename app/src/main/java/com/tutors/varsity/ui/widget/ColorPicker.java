@@ -35,8 +35,8 @@ public class ColorPicker extends DialogFragment {
 
     public static ColorPicker newInstance() {
 
-        ColorPicker confirmDialogFragment = new ColorPicker();
-        return confirmDialogFragment;
+        ColorPicker colorPicker = new ColorPicker();
+        return colorPicker;
     }
 
     @Override
@@ -50,11 +50,10 @@ public class ColorPicker extends DialogFragment {
         final View dialogView = inflater.inflate(R.layout.dialog_color_picker, null);
         dialog.setContentView(dialogView);
 
+        GridView gridView = (GridView) dialogView.findViewById(R.id.color_picker_grid);
+        gridView.setAdapter(new ColorAdapter(App.getInstance(), mColorSwatchIds));
 
-        GridView confirmMsg = (GridView) dialogView.findViewById(R.id.color_picker_grid);
-        confirmMsg.setAdapter(new ColorAdapter(App.getInstance(), mColorSwatchIds));
-
-        confirmMsg.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v,
                                     int position, long id) {
                 int colorId = mColorSwatchIds[position];
