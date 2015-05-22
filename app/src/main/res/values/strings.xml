@@ -5,7 +5,8 @@
     <string name="main_action_erase">erase</string>
     <string name="main_action_undo">undo</string>
     <string name="main_action_color">color</string>
-    <string name="main_action_email"></string>
+    <string name="main_action_email">email</string>
+    <string name="main_action_add_photo">add photo</string>
 
     <string name="black">Black</string>
     <string name="dark_gray">Dark gray</string>

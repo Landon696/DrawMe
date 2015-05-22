@@ -8,6 +8,11 @@
         android:title="@string/main_action_undo"
         app:showAsAction="always"/>
 
+    <item android:id="@+id/action_add_photo"
+        android:icon="@drawable/ic_action_new_picture"
+        android:title="@string/main_action_add_photo"
+        app:showAsAction="always"/>
+
     <item android:id="@+id/action_email"
         android:icon="@drawable/ic_action_email"
         android:title="@string/main_action_email"

@@ -2,13 +2,18 @@ package com.tutors.varsity.ui.fragment;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
+import android.graphics.Point;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -17,12 +22,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 
 import com.squareup.otto.Subscribe;
 import com.tutors.varsity.R;
 import com.tutors.varsity.ui.event.ColorPicked;
 import com.tutors.varsity.ui.widget.ColorPicker;
 import com.tutors.varsity.ui.widget.DrawingCanvas;
+import com.tutors.varsity.util.BitmapHelper;
 import com.tutors.varsity.util.otto.ApplicationBus;
 
 import org.joda.time.DateTime;
@@ -38,12 +45,17 @@ import java.io.IOException;
  */
 public class DrawFragment extends Fragment implements View.OnClickListener {
 
+    private static final int REQUEST_CODE_GALLERY = 1;
+
     ImageButton mPencil;
     ImageButton mEraser;
     View mColorSwatch;
+    FrameLayout mDrawingContainer;
+    FrameLayout mDrawingCanvasContainer;
     DrawingCanvas mDrawingCanvas;
-    FrameLayout mContainer;
     int mPencilColor;
+    ImageView mPhotoView;
+    Bitmap mPhoto;
 
     public DrawFragment() {
     }
@@ -86,6 +98,14 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
     }
 
     @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (mPhoto != null) {
+            mPhoto.recycle();
+        }
+    }
+
+    @Override
     public void onClick(View view) {
 
         switch (view.getId()) {
@@ -96,6 +116,7 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
             case R.id.eraser:
                 makeToolbarButtonActive(view.getId());
                 mDrawingCanvas.erase();
+                mPhotoView.setImageBitmap(null);
                 break;
 
             case R.id.color_swatch:
@@ -115,6 +136,9 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
             case R.id.action_undo:
                 mDrawingCanvas.undo();
                 return true;
+            case R.id.action_add_photo:
+                loadPhotoGallery();
+                return true;
             case R.id.action_email:
                 emailFriend(getActivity(),R.id.drawing_container);
                 return true;
@@ -123,6 +147,63 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
         }
 
         return false;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+
+        super.onActivityResult(requestCode, resultCode, intent);
+
+        //Adding picture from photo gallery intent
+        if (requestCode == REQUEST_CODE_GALLERY && resultCode == Activity.RESULT_OK) {
+
+            //need device screen size to optimize bitmap load
+            Display display = getActivity().getWindowManager().getDefaultDisplay();
+            Point size = new Point();
+            display.getSize(size);
+            int width = size.x;
+            int height = size.y;
+
+            try {
+                final Uri imageUri = intent.getData();
+                String picFullPath = "";
+
+                if (imageUri != null) {
+
+                    // now we get the path to the image file
+                    Cursor cursor = getActivity().getContentResolver().query(imageUri,
+                            new String[]{MediaStore.Images.Media.DATA},
+                            null, null, null);
+                    cursor.moveToFirst();
+                    picFullPath = cursor.getString(0);
+
+                    cursor.close();
+                }
+
+                mPhoto = BitmapHelper.optimize(picFullPath, width, height);
+                boolean wideScreen = BitmapHelper.wideScreen(mPhoto.getWidth(), mPhoto.getHeight());
+
+                //handle landscape pic
+                if (mPhoto.getWidth() > mPhoto.getHeight()) {
+                    Matrix matrix = new Matrix();
+                    matrix.postRotate(90);
+                    mPhoto = Bitmap.createBitmap(mPhoto, 0, 0, mPhoto.getWidth(),
+                            mPhoto.getHeight(), matrix, true);
+                }
+
+                if (wideScreen) {
+                    mPhotoView.setScaleType(ImageView.ScaleType.FIT_XY);
+                }
+                else {
+                    mPhotoView.setScaleType(ImageView.ScaleType.FIT_XY);
+                }
+
+                mPhotoView.setImageBitmap(mPhoto);
+
+            } catch (OutOfMemoryError e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Subscribe
@@ -135,7 +216,9 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
 
     private void initViews(View v) {
 
-        mContainer = (FrameLayout) v.findViewById(R.id.drawing_container);
+        mPhotoView = (ImageView) v.findViewById(R.id.photo);
+        mDrawingContainer = (FrameLayout) v.findViewById(R.id.drawing_container);
+        mDrawingCanvasContainer = (FrameLayout) v.findViewById(R.id.drawing_canvas_container);
         mPencil = (ImageButton) v.findViewById(R.id.pencil);
         mEraser = (ImageButton) v.findViewById(R.id.eraser);
         mColorSwatch = v.findViewById(R.id.color_swatch);
@@ -147,7 +230,7 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
         mPencilColor = R.color.blue;
         mDrawingCanvas = new DrawingCanvas(getActivity());
         mDrawingCanvas.setPencilColor(mPencilColor);
-        mContainer.addView(mDrawingCanvas);
+        mDrawingCanvasContainer.addView(mDrawingCanvas);
     }
 
     private void makeToolbarButtonActive(int rId) {
@@ -156,7 +239,6 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
 
         GradientDrawable gd = (GradientDrawable)(getActivity().findViewById(rId)).getBackground();
         gd.setStroke(2,getResources().getColor(R.color.white));
-
     }
 
     private void emailFriend(Activity activity, int resourceId) {
@@ -217,5 +299,11 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
         emailIntent.putExtra(Intent.EXTRA_STREAM, uri);
 
         startActivity(Intent.createChooser(emailIntent, "Pick an Email provider"));
+    }
+
+    private void loadPhotoGallery() {
+        Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
+        photoPickerIntent.setType("image/*");
+        startActivityForResult(photoPickerIntent, REQUEST_CODE_GALLERY);
     }
 }

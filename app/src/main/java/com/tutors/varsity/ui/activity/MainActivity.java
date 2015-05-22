@@ -35,6 +35,8 @@ public class MainActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.action_undo:
                 return false;
+            case R.id.action_add_photo:
+                return false;
             case R.id.action_email:
                 return false;
             default:
