@@ -4,22 +4,22 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Path;
 import android.view.MotionEvent;
 import android.view.View;
 
 import com.tutors.varsity.R;
+import com.tutors.varsity.model.DrawMePath;
 
 import java.util.LinkedList;
 
 public class DrawingCanvas extends View implements View.OnTouchListener {
 
 
-    private int defaultStroke = 6;
+    private int mStrokeSize = 6;
     private Canvas mCanvas;
-    private Path mPath;
+    private DrawMePath mPath;
     private Paint mPaint;
-    private LinkedList<Path> mPaths = new LinkedList<>();
+    private LinkedList<DrawMePath> mPaths = new LinkedList<>();
     private int mPencilColor = R.color.blue;
 
     public DrawingCanvas(Context context) {
@@ -36,27 +36,12 @@ public class DrawingCanvas extends View implements View.OnTouchListener {
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setStrokeJoin(Paint.Join.ROUND);
         mPaint.setStrokeCap(Paint.Cap.ROUND);
-        mPaint.setStrokeWidth(defaultStroke);
+        mPaint.setStrokeWidth(mStrokeSize);
         mCanvas = new Canvas();
         mCanvas.drawColor(Color.WHITE);
-        mPath = new Path();
-        mPaths.add(mPath);
+        mPath = new DrawMePath(mPencilColor, mStrokeSize);
+        mPaths.addFirst(mPath);
 
-    }
-
-    public void undo(){
-        mPaths.removeLast();
-        invalidate();
-    }
-
-    public void setPencilColor(int color) {
-        mPencilColor = color;
-        mPaint.setColor(getResources().getColor(mPencilColor));
-    }
-
-    public void erase() {
-        mPaths.clear();
-        invalidate();
     }
 
     @Override
@@ -68,13 +53,48 @@ public class DrawingCanvas extends View implements View.OnTouchListener {
     protected void onDraw(Canvas canvas) {
 
         if (mPaths.size() > 0) {
-            for (Path p : mPaths) {
+            for (DrawMePath p : mPaths) {
+                mPaint.setColor(getResources().getColor(p.getColorId()));
+                mPaint.setStrokeWidth(p.getStokeSize());
                 canvas.drawPath(p, mPaint);
             }
         }
         else {
             canvas.drawColor(Color.TRANSPARENT);
         }
+    }
+
+    public LinkedList<DrawMePath> getPaths() {
+        return mPaths;
+    }
+
+    public void undo(){
+        if (!mPaths.isEmpty()) {
+            if (mPaths.get(0).isEmpty() && mPaths.size() > 1) {
+                mPaths.removeFirst();
+            }
+            mPaths.removeFirst();
+            invalidate();
+        }
+    }
+
+    public void setPencilColor(int color) {
+
+        mPencilColor = color;
+        mPaint.setColor(getResources().getColor(mPencilColor));
+        mPaths.get(0).setColorId(mPencilColor);
+        refreshPaint();
+    }
+
+    public void setStroke(int size) {
+        mStrokeSize = size;
+        mPaths.get(0).setStokeSize(mStrokeSize);
+        refreshPaint();
+    }
+
+    public void erase() {
+        mPaths.clear();
+        invalidate();
     }
 
     private float mX, mY;
@@ -100,8 +120,8 @@ public class DrawingCanvas extends View implements View.OnTouchListener {
         // commit the path to our offscreen
         mCanvas.drawPath(mPath, mPaint);
         // kill this so we don't double draw
-        mPath = new Path();
-        mPaths.add(mPath);
+        mPath = new DrawMePath(mPencilColor, mStrokeSize);
+        mPaths.addFirst(mPath);
     }
 
 
@@ -126,5 +146,18 @@ public class DrawingCanvas extends View implements View.OnTouchListener {
                 break;
         }
         return true;
+    }
+
+    private void refreshPaint () {
+        mPaint = new Paint();
+        mPaint.setAntiAlias(true);
+        mPaint.setDither(true);
+        mPaint.setColor(getResources().getColor(mPencilColor));
+        mPaint.setStyle(Paint.Style.STROKE);
+        mPaint.setStrokeJoin(Paint.Join.ROUND);
+        mPaint.setStrokeCap(Paint.Cap.ROUND);
+        mPaint.setStrokeWidth(mStrokeSize);
+        mCanvas = new Canvas();
+        mCanvas.drawColor(Color.WHITE);
     }
 }

@@ -27,8 +27,10 @@ import android.widget.ImageView;
 import com.squareup.otto.Subscribe;
 import com.tutors.varsity.R;
 import com.tutors.varsity.ui.event.ColorPicked;
+import com.tutors.varsity.ui.event.LineThicknessPicked;
 import com.tutors.varsity.ui.widget.ColorPicker;
 import com.tutors.varsity.ui.widget.DrawingCanvas;
+import com.tutors.varsity.ui.widget.LineThicknessPicker;
 import com.tutors.varsity.util.BitmapHelper;
 import com.tutors.varsity.util.otto.ApplicationBus;
 
@@ -56,6 +58,7 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
     int mPencilColor;
     ImageView mPhotoView;
     Bitmap mPhoto;
+    int mLineThickness;
 
     public DrawFragment() {
     }
@@ -63,6 +66,7 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+        setRetainInstance(true);
     }
 
     @Override
@@ -111,6 +115,7 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
         switch (view.getId()) {
             case R.id.pencil:
                 makeToolbarButtonActive(view.getId());
+                LineThicknessPicker.newInstance(mPencilColor).show(getFragmentManager(),"");
                 break;
 
             case R.id.eraser:
@@ -206,12 +211,23 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
         }
     }
 
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+    }
+
     @Subscribe
     public void onColorPicked(ColorPicked event) {
 
         mColorSwatch.setBackgroundColor(getResources().getColor(event.getColorId()));
         mPencilColor = event.getColorId();
         mDrawingCanvas.setPencilColor(mPencilColor);
+    }
+
+    @Subscribe
+    public void onLineStrokePicked(LineThicknessPicked event) {
+        mLineThickness = event.getLineThickness();
+        mDrawingCanvas.setStroke(mLineThickness);
     }
 
     private void initViews(View v) {

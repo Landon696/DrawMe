@@ -16,7 +16,7 @@ import android.widget.TextView;
 
 import com.tutors.varsity.App;
 import com.tutors.varsity.R;
-import com.tutors.varsity.ui.event.ColorPicked;
+import com.tutors.varsity.ui.event.LineThicknessPicked;
 import com.tutors.varsity.util.otto.ApplicationBus;
 
 /**
@@ -66,8 +66,8 @@ public class LineThicknessPicker extends DialogFragment {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v,
                                     int position, long id) {
-                int colorId = mSizes[position];
-                ApplicationBus.getInstance().post(new ColorPicked(colorId));
+                int size = mSizes[position];
+                ApplicationBus.getInstance().post(new LineThicknessPicked(size));
                 dismiss();
             }
         });
