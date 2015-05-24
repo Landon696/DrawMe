@@ -6,7 +6,6 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.graphics.Point;
-import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -54,6 +53,7 @@ import java.util.LinkedList;
 public class DrawFragment extends Fragment implements View.OnClickListener {
 
     private static final int REQUEST_CODE_GALLERY = 1;
+    private static final String SAVE_STATE_DRAWING_PATHS = "drawingPaths";
 
     ImageButton mPencil;
     ImageButton mEraser;
@@ -91,8 +91,14 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
 
         super.onViewCreated(view, savedInstanceState);
 
-        //default to pencil view
-        makeToolbarButtonActive(R.id.pencil);
+        if (savedInstanceState != null) {
+            LinkedList<DrawMePath> paths = new LinkedList<>();;
+            ArrayList<String> drawnPathsString = savedInstanceState.getStringArrayList(SAVE_STATE_DRAWING_PATHS);
+            for (String s: drawnPathsString) {
+                paths.addFirst(new Gson().fromJson(s,DrawMePath.class));
+            }
+            mDrawingCanvas.setDrawingPaths(paths);
+        }
     }
 
     @Override
@@ -121,12 +127,10 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
 
         switch (view.getId()) {
             case R.id.pencil:
-                makeToolbarButtonActive(view.getId());
                 LineThicknessPicker.newInstance(mPencilColor).show(getFragmentManager(),"");
                 break;
 
             case R.id.eraser:
-                makeToolbarButtonActive(view.getId());
                 mDrawingCanvas.erase();
                 mPhotoView.setImageBitmap(null);
                 break;
@@ -234,7 +238,7 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
         for (DrawMePath p : drawnPaths) {
             drawnPathsString.add(new Gson().toJson(p));
         }
-        outState.putStringArrayList("drawSteps", drawnPathsString);
+        outState.putStringArrayList(SAVE_STATE_DRAWING_PATHS, drawnPathsString);
     }
 
     @Override
@@ -299,14 +303,6 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
         mDrawingCanvas = new DrawingCanvas(getActivity());
         mDrawingCanvas.setPencilColor(mPencilColor);
         mDrawingCanvasContainer.addView(mDrawingCanvas);
-    }
-
-    private void makeToolbarButtonActive(int rId) {
-        ((GradientDrawable)mPencil.getBackground()).setStroke(2, getResources().getColor(R.color.black));
-        ((GradientDrawable)mEraser.getBackground()).setStroke(2, getResources().getColor(R.color.black));
-
-        GradientDrawable gd = (GradientDrawable)(getActivity().findViewById(rId)).getBackground();
-        gd.setStroke(2,getResources().getColor(R.color.white));
     }
 
     private void emailFriend(Activity activity, int resourceId) {

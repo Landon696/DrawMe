@@ -5,7 +5,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.CountDownTimer;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -92,14 +91,18 @@ public class DrawingCanvas extends View implements View.OnTouchListener {
 
         mPencilColor = color;
         mPaint.setColor(getResources().getColor(mPencilColor));
-        mPaths.get(0).setColorId(mPencilColor);
-        refreshPaint();
+        if (mPaths.size() > 0) {
+            mPaths.get(0).setColorId(mPencilColor);
+            refreshPaint();
+        }
     }
 
     public void setStroke(int size) {
         mStrokeSize = size;
-        mPaths.get(0).setStokeSize(mStrokeSize);
-        refreshPaint();
+        if (mPaths.size() > 0) {
+            mPaths.get(0).setStokeSize(mStrokeSize);
+            refreshPaint();
+        }
     }
 
     public void erase() {
@@ -116,11 +119,9 @@ public class DrawingCanvas extends View implements View.OnTouchListener {
         erase();
 
         mPlaybackCounter = mPlaybackPaths.size();
-        Log.e("","mPlaybackCounter: " + mPlaybackCounter);
         new CountDownTimer(mPlaybackPaths.size() * 1000, 1000) {
 
             public void onTick(long millisUntilFinished) {
-                Log.e("","onTick mPlaybackCounter: " + mPlaybackCounter);
                 mPaths.addFirst(mPlaybackPaths.get(mPlaybackCounter - 1));
                 invalidate();
                 mPlaybackCounter--;
@@ -130,6 +131,10 @@ public class DrawingCanvas extends View implements View.OnTouchListener {
                 ApplicationBus.getInstance().post(new PlaybackFinished());
             }
         }.start();
+    }
+
+    public void setDrawingPaths(LinkedList<DrawMePath> paths) {
+        mPaths = paths;
     }
 
     private float mX, mY;
