@@ -35,7 +35,7 @@
             android:layout_height="10dp"
             android:layout_gravity="center"
             android:layout_margin="5dp"
-            android:background="@color/white" />
+            android:background="@color/action_bar" />
 
         <ImageButton
             android:id="@+id/pencil"

@@ -8,6 +8,8 @@
     <string name="main_action_email">email</string>
     <string name="main_action_add_photo">add photo</string>
 
+    <string name="media_action_play">play</string>
+
     <string name="black">Black</string>
     <string name="dark_gray">Dark gray</string>
     <string name="light_gray">Light gray</string>

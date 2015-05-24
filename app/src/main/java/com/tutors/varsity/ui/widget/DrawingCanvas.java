@@ -4,23 +4,32 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.os.CountDownTimer;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.google.gson.Gson;
 import com.tutors.varsity.R;
 import com.tutors.varsity.model.DrawMePath;
+import com.tutors.varsity.ui.event.PlaybackFinished;
+import com.tutors.varsity.util.otto.ApplicationBus;
 
 import java.util.LinkedList;
 
 public class DrawingCanvas extends View implements View.OnTouchListener {
 
+    public static int DRAWING = 0;
+    public static int REPLAY_PLAY = 1;
 
     private int mStrokeSize = 6;
     private Canvas mCanvas;
     private DrawMePath mPath;
     private Paint mPaint;
     private LinkedList<DrawMePath> mPaths = new LinkedList<>();
+    private LinkedList<DrawMePath> mPlaybackPaths = new LinkedList<>();
     private int mPencilColor = R.color.blue;
+    private int mPlaybackCounter;
 
     public DrawingCanvas(Context context) {
         super(context);
@@ -54,6 +63,7 @@ public class DrawingCanvas extends View implements View.OnTouchListener {
 
         if (mPaths.size() > 0) {
             for (DrawMePath p : mPaths) {
+                String s = new Gson().toJson(p);
                 mPaint.setColor(getResources().getColor(p.getColorId()));
                 mPaint.setStrokeWidth(p.getStokeSize());
                 canvas.drawPath(p, mPaint);
@@ -95,6 +105,31 @@ public class DrawingCanvas extends View implements View.OnTouchListener {
     public void erase() {
         mPaths.clear();
         invalidate();
+    }
+
+    public void play() {
+
+        for (final DrawMePath p : mPaths) {
+            mPlaybackPaths.add(p);
+        }
+
+        erase();
+
+        mPlaybackCounter = mPlaybackPaths.size();
+        Log.e("","mPlaybackCounter: " + mPlaybackCounter);
+        new CountDownTimer(mPlaybackPaths.size() * 1000, 1000) {
+
+            public void onTick(long millisUntilFinished) {
+                Log.e("","onTick mPlaybackCounter: " + mPlaybackCounter);
+                mPaths.addFirst(mPlaybackPaths.get(mPlaybackCounter - 1));
+                invalidate();
+                mPlaybackCounter--;
+            }
+
+            public void onFinish() {
+                ApplicationBus.getInstance().post(new PlaybackFinished());
+            }
+        }.start();
     }
 
     private float mX, mY;

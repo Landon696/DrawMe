@@ -23,11 +23,15 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 
+import com.google.gson.Gson;
 import com.squareup.otto.Subscribe;
 import com.tutors.varsity.R;
+import com.tutors.varsity.model.DrawMePath;
 import com.tutors.varsity.ui.event.ColorPicked;
 import com.tutors.varsity.ui.event.LineThicknessPicked;
+import com.tutors.varsity.ui.event.PlaybackFinished;
 import com.tutors.varsity.ui.widget.ColorPicker;
 import com.tutors.varsity.ui.widget.DrawingCanvas;
 import com.tutors.varsity.ui.widget.LineThicknessPicker;
@@ -41,6 +45,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedList;
 
 /**
  * Created by Landon on 5/18/15.
@@ -59,6 +65,8 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
     ImageView mPhotoView;
     Bitmap mPhoto;
     int mLineThickness;
+    int mDrawingCanvasState = DrawingCanvas.DRAWING;
+    LinearLayout mToolbar;
 
     public DrawFragment() {
     }
@@ -66,7 +74,6 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
-        setRetainInstance(true);
     }
 
     @Override
@@ -138,6 +145,12 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+            case R.id.action_play:
+                mDrawingCanvasState = DrawingCanvas.REPLAY_PLAY;
+                mToolbar.setVisibility(View.GONE);
+                getActivity().invalidateOptionsMenu();
+                mDrawingCanvas.play();
+                return true;
             case R.id.action_undo:
                 mDrawingCanvas.undo();
                 return true;
@@ -214,6 +227,37 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
+
+        ArrayList<String> drawnPathsString = new ArrayList<>();
+
+        LinkedList<DrawMePath> drawnPaths = mDrawingCanvas.getPaths();
+        for (DrawMePath p : drawnPaths) {
+            drawnPathsString.add(new Gson().toJson(p));
+        }
+        outState.putStringArrayList("drawSteps", drawnPathsString);
+    }
+
+    @Override
+    public void onPrepareOptionsMenu(Menu menu) {
+
+        MenuItem undo = menu.findItem(R.id.action_undo);
+        MenuItem picture = menu.findItem(R.id.action_add_photo);
+        MenuItem email = menu.findItem(R.id.action_email);
+        MenuItem mediaPlay = menu.findItem(R.id.action_play);
+
+        if (mDrawingCanvasState == DrawingCanvas.DRAWING) {
+            undo.setVisible(true);
+            picture.setVisible(true);
+            email.setVisible(true);
+        }
+        else if (mDrawingCanvasState == DrawingCanvas.REPLAY_PLAY) {
+            undo.setVisible(false);
+            picture.setVisible(false);
+            email.setVisible(false);
+            mediaPlay.setVisible(false);
+        }
+
+        super.onPrepareOptionsMenu(menu);
     }
 
     @Subscribe
@@ -230,8 +274,16 @@ public class DrawFragment extends Fragment implements View.OnClickListener {
         mDrawingCanvas.setStroke(mLineThickness);
     }
 
+    @Subscribe
+    public void onPlaybackFinished(PlaybackFinished event) {
+        mDrawingCanvasState = DrawingCanvas.DRAWING;
+        getActivity().invalidateOptionsMenu();
+        mToolbar.setVisibility(View.VISIBLE);
+    }
+
     private void initViews(View v) {
 
+        mToolbar = (LinearLayout) v.findViewById(R.id.toolbar);
         mPhotoView = (ImageView) v.findViewById(R.id.photo);
         mDrawingContainer = (FrameLayout) v.findViewById(R.id.drawing_container);
         mDrawingCanvasContainer = (FrameLayout) v.findViewById(R.id.drawing_canvas_container);
